@@ -7,7 +7,7 @@ from utils.chat_utils import ChatUtils
 
 dotenv.load_dotenv()
 
-# Inicializa o cliente AzureOpenAI e o assistente
+# Inicializa o cliente AzureOpenAI e assistente
 chat_utils = ChatUtils()
 client = chat_utils.client
 assistant = chat_utils.assistant
