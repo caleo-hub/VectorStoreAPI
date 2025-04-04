@@ -25,7 +25,7 @@ class ChatUtils:
             instructions=self.role_prompt,
             tools=self.get_chat_tools(),
             tool_resources={
-                "file_search": {"vector_store_ids": ["vs_SWLZ58sWo3GfmVUZXQimzzZB"]}
+                "file_search": {"vector_store_ids": [os.getenv(VECTOR_STORE_ID)]}
             },
             temperature=1,
             top_p=1,
@@ -98,7 +98,9 @@ class ChatUtils:
         Retorna as ferramentas de chat disponíveis.
         """
         return [
-            {"type": "file_search"},
+            {
+                "type": "file_search",
+            },
             {
                 "type": "function",
                 "function": {
