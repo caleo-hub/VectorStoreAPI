@@ -1,3 +1,4 @@
+import os
 import azure.functions as func
 import logging
 import json
@@ -41,6 +42,22 @@ def chatbotapi(req: func.HttpRequest) -> func.HttpResponse:
     else:
         thread = client.beta.threads.retrieve(thread_id=thread_id)
 
+    # Verifica se há uma execução em andamento antes de adicionar nova mensagem
+    active_runs = list(client.beta.threads.runs.list(thread_id=thread_id))
+    active_run = next((r for r in active_runs if r.status in ["queued", "in_progress", "cancelling", "requires_action"]), None)
+    logging.info([r.status for r in active_runs])
+    if active_run:
+        logging.info(f"Thread {thread_id} está em execução de automação.")
+        return func.HttpResponse(
+            json.dumps({
+                "threadId": thread_id,
+                "answer": "Estamos processando sua solicitação anterior. Por favor, aguarde alguns segundos antes de enviar outra mensagem. ⏳",
+                "citations": []
+            }),
+            status_code=200,
+            mimetype="application/json"
+        )
+
     # Adiciona a nova mensagem ao thread (o histórico já é mantido internamente)
     client.beta.threads.messages.create(thread_id=thread_id, role=role, content=content)
 
@@ -75,9 +92,18 @@ def chatbotapi(req: func.HttpRequest) -> func.HttpResponse:
                         text_value = text_value.replace(annotation.text, f"[{index}]")
                         if file_citation := getattr(annotation, "file_citation", None):
                             cited_file = client.files.retrieve(file_citation.file_id)
-                            citations.append(f"{cited_file.filename}")
+                            citations.append(
+                                {
+                                    "id": index,
+                                    "filename": cited_file.filename,
+                                    "url": os.getenv("SEARCH_AI_BLOB_ENDPOINT")
+                                    + cited_file.filename.replace(".docx", ".pdf"),
+                                }
+                            )
+                            # citations.append(f"{cited_file.filename}")
                     answer_parts.append(text_value)
             answer = "".join(answer_parts)
+
         else:
             answer = "Nenhuma resposta encontrada."
     elif run.status == "requires_action":
