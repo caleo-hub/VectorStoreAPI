@@ -25,7 +25,7 @@ class ChatUtils:
             instructions=self.role_prompt,
             tools=self.get_chat_tools(),
             tool_resources={
-                "file_search": {"vector_store_ids": [os.getenv(VECTOR_STORE_ID)]}
+                "file_search": {"vector_store_ids": [os.getenv("VECTOR_STORE_ID")]}
             },
             temperature=1,
             top_p=1,
